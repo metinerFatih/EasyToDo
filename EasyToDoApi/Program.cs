@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddCors(options => options.AddDefaultPolicy(
+    policy => policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin())); //Cors
+
 builder.Services.AddDbContext<ApplicationDbContext>(o => o.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddControllers();
@@ -21,6 +24,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors(); //Cors aktif ettik.
 
 app.UseAuthorization();
 
