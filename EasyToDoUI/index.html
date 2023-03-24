@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easy Todo App</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <form @submit.prevent="addTodo()">
+            <input v-model="title" type="text" placeholder="write something to do..." required>
+            <button>Add</button>
+        </form>
+        <ul>
+            <li v-for="todo in sortedTodos" :key="todo.id"><!--key atayarak array'ye göre değil id'ye göre sıralanmasını sağlar.-->
+                <input type="checkbox" @change="updateTodo(todo)" v-model="todo.done">
+                {{ todo.id }} -
+                {{ todo.title }}
+                <button @click="deleteTodo(todo)" style="background-color:red; color:white">&times;</button>
+            </li>
+        </ul>
+    </div>
+
+    <script>
+        const apiUrl = "https://localhost:7264/api/TodoItems";
+
+        Vue.createApp({
+            data() {
+                return {
+                    todos: [],
+                    title: ""
+                };
+            },
+            mounted() {
+                // vue nesnesi ilk oluşturulduğunda çalışır.
+                fetch(apiUrl)
+                    .then(res => res.json())
+                    .then(data => this.todos = data);
+            },
+            methods: {
+                addTodo() {
+                    const newTodo = {
+                        title: this.title,
+                        done: false
+                    };
+                    this.title = "";
+                    fetch(apiUrl, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(newTodo)
+                    })
+                        .then(res => res.json())
+                        .then(data => this.todos.push(data));
+                },
+                updateTodo(todo) {
+                    fetch(`${apiUrl}/${todo.id}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(todo)
+                    })
+                        .then(res => {
+                            if (res.ok) {
+                                alert("todo was successfuly updated!");
+                            }
+                            else {
+                                throw new Error("todo was not updated!")
+                            }
+                        })
+                        .catch(err => {
+                            todo.done = !todo.done;
+                        })
+                },
+                deleteTodo(todo) {
+                    fetch(`${apiUrl}/${todo.id}`, { method: "delete" })
+                        .then(res => {
+                            if (res.ok) {
+                                this.todos = this.todos.filter(x => x.id != todo.id);
+                                alert("todo was successfuly deleted!");
+                            }
+                        })
+                }
+            },
+            computed: {
+                sortedTodos() {
+                    return this.todos.sort((a, b) => a.done - b.done);
+                }
+            }
+        }).mount("#app");
+    </script>
+</body>
+
+</html>
